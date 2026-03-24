@@ -1,0 +1,1490 @@
+---
+title: "Data Wrangling with the Tidyverse"
+resource_files:
+- appforthat.jpg
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+      highlightLines: yes
+      highlightStyle: github
+      countIncrementalSlides: false
+      ratio: '16:9'
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+library(tidyverse)
+library(flair)
+library(palmerpenguins)
+library(here)
+```
+
+```{r xaringan-themer, include=FALSE}
+library(xaringanthemer)
+mono_light(
+  base_color = "#26116c",
+  text_bold_color = "#fd5e53",
+  title_slide_text_color = "#fff8e7",
+  background_color = "#fff8e7",
+  header_font_google = google_font("Roboto"),
+  text_font_google   = google_font("Roboto Condensed"),
+  code_font_google   = google_font("Droid Mono")
+)
+```
+
+# The tidyverse
+
+* One philosophy of the **tidyverse** is building **pipe-friendly** functions.
+
+* Another philosophy is using **English verbs** as function names instead of symbols or abbreviations.
+
+* Some consider this more accessible/readable
+
+```{r, eval = FALSE}
+penguins %>%
+  filter(species == "Adelie")
+```
+
+```{r, eval = FALSE}
+
+penguins[penguins$species == "Adelie",]
+```
+
+
+---
+# The tidyverse
+
+**Pros:**
+
+* Fairly consistent behavior of functions
+
+    + Predictable **input** and **output** types
+    + *"opinionated"*
+    + More on this later
+    
+--
+
+* Semi-guaranteed maintenance of packages
+
+(because RStudio pays developers!)
+
+--
+
+* More available and polished documentation and tutorials
+
+--
+
+* Welcoming community
+
+---
+# The tidyverse
+
+**Cons:**
+
+* Sometimes less flexible for complex tasks
+
+--
+
+* Generally slower, especially on big data
+
+--
+
+* Updates frequently -> sometimes this makes your old code unrunnable.
+
+--
+
+* Some people object to **RStudio**'s strong influence over an open-source community.
+
+---
+class: center, middle
+
+# Should you use the tidyverse???
+
+--
+
+Even the most die-hard tidyverse fanatics use base R and other packages quite frequently.
+
+--
+
+Above all, the best code approach is the one that
+
+- you enjoy the most 
+
+- gets job done
+
+- lets you collaborate with colleagues.
+
+
+
+---
+
+class: center, middle, invert
+
+# Cleaning and transforming data
+
+<img src="https://d33wubrfki0l68.cloudfront.net/071952491ec4a6a532a3f70ecfa2507af4d341f9/c167c/images/hex-dplyr.png" width=300>
+
+
+---
+class: center, middle, inverse
+
+# Prerequisite:  The Pipe  `%>%`
+
+---
+# Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the tidyverse)
+
+---
+
+```{r, echo=FALSE, out.width = '70%', fig.align = "center"}
+knitr::include_graphics(here::here("Lecture Slides", "Images", "ceci_pipe.jpeg"))
+```
+
+---
+
+```{r, echo=FALSE, out.width = '50%', fig.align = "center"}
+knitr::include_graphics(here::here("Lecture Slides", "Images", "magrittr_hex.png"))
+```
+
+---
+# Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the tidyverse)
+
+--
+
+* Idea:  The **data** is the primary object, so it should come first in your code.
+
+--
+
+* Idea:  Code should read **like a sentence**
+
+---
+
+# The Pipe
+
+```{r, echo = FALSE}
+decorate('penguins %>% summary()', eval = FALSE) %>% 
+  flair("%>%") %>% 
+  flair_funs(color = "teal")
+```
+
+is the same as
+
+```{r, echo = FALSE}
+decorate('summary(penguins)', eval = FALSE) %>% 
+  flair_funs(color = "teal")
+```
+
+---
+# The Pipe
+
+What do you think the following will do?
+
+```{r, eval = FALSE}
+penguins %>%
+  filter(species == "Adelie") %>%
+  arrange(body_mass_g)
+```
+
+---
+# The Pipe
+
+What do you think the following will do?
+
+```{r}
+penguins %>%
+  filter(species == "Adelie") %>%
+  arrange(body_mass_g)
+```
+
+
+---
+
+# Summarizing
+
+```{r, echo = FALSE}
+decorate('
+penguins %>%
+  summary()
+  ') %>% flair("y(")
+```
+
+---
+# Cleaning 1: missing data
+
+Oh no!  There was one row of the dataset with missing values.
+
+--
+
+There is no magic answer for how to handle missing values; one solution is to simply drop them from the data.
+
+*Consider - why might this sometimes be a bad idea?*
+
+--
+
+```{r}
+penguins <- 
+  penguins %>%
+  drop_na()
+
+penguins %>% summary()
+  
+```
+
+---
+# Cleaning 2: What's in a name?
+
+The column names in the `penguins` dataset are nice for a few reasons:
+
+```{r, echo = FALSE}
+names(penguins)
+```
+
+* No capital letters
+
+* Underscores to separate words
+
+* Short but descriptive
+
+
+--
+
+What if they weren't?
+
+---
+# Cleaning 2: What's in a name?
+
+```{r, echo = FALSE}
+names(iris)
+```
+--
+
+The `janitor` package!
+
+```{r}
+library(janitor)
+
+iris %>%
+  clean_names
+```
+
+
+
+---
+# Summarizing specific variables
+
+```{r, echo = FALSE}
+decorate('
+penguins %>%
+  summarize(mean_mass = mean(body_mass_g))
+  ') %>% 
+  flair("ize(") %>% 
+  flair("mean", color = "teal") %>%
+  flair("body_mass_g", color = "cornflowerblue")
+```
+
+--
+
+* What are the **required** arguments of `summarize`?  
+
+* Are there any optional arguments?
+
+---
+
+# Many variables?  Many summary statistics?
+## No problemo
+
+```{r, echo = FALSE}
+decorate('
+penguins %>%
+  summarize(across(c(body_mass_g, flipper_length_mm),
+            list(mean, median)))
+  ') %>% 
+  flair("across") %>%
+  flair_rx("(mean)|(median)", color = "teal") %>%
+  flair_rx("(body_mass_g)|(flipper_length_mm)", color = "cornflowerblue") %>%
+  flair_rx("list", color = "darkred")
+```
+
+---
+# Making new variables
+
+Verb: `mutate()`
+
+The dataset gets *mutated* to include a new variable.
+
+```{r, echo = FALSE}
+decorate('
+penguins %>%
+  mutate(
+    bill_size = bill_length_mm * bill_depth_mm
+  ) %>%
+  summary()
+  ') %>%
+  flair("mutate") %>%
+  flair("bill_size", color = "teal")
+```
+
+---
+
+Cool, let's look at our new variable!
+
+```{r, error = TRUE}
+penguins %>%
+  summarize(mean_bill = sd(bill_size))
+```
+
+--
+
+OH NO!
+
+**What happened here?**
+
+---
+
+class: center, middle
+
+# We calculated a new variable, but didn't reassign the data object
+
+---
+
+```{r, echo = FALSE}
+decorate('
+penguins <- penguins %>%
+          mutate(
+            bill_size = bill_length_mm * bill_depth_mm
+          )
+          
+penguins %>%
+  summarize(mean_bill = sd(bill_size))
+') %>% 
+  flair("penguins <- ")
+
+
+```
+
+---
+# Ordering
+
+Verb: `arrange()`
+
+We **arrange** the dataset in order of a particular variable.
+
+```{r}
+penguins %>% 
+  arrange(body_mass_g)
+```
+
+---
+
+## Related: `top_n`
+
+```{r}
+penguins %>%
+  top_n(3, body_mass_g)
+```
+
+---
+
+# Quick check in!
+
+Remember,
+
+```{r, eval = FALSE}
+penguins %>%
+  top_n(3, body_mass_g)
+```
+
+is the same as
+
+```{r, eval = FALSE}
+top_n(penguins, 3, body_mass_g)
+```
+
+or
+
+```{r, eval = FALSE}
+top_n(x = penguins, n = 3, wt = body_mass_g)
+```
+
+---
+
+# Selecting
+
+Verb: `select()`
+
+We **select** which variables we would like to remain in the dataset.
+
+```{r}
+penguins %>%
+  select(species, body_mass_g) %>%
+  arrange(body_mass_g)
+```
+
+---
+
+# Filtering
+
+Verb: `filter()`
+
+We **filter** to the rows (observations) we would like to keep in the dataset.
+
+```{r, eval = FALSE}
+penguins_new %>%
+  select(species, body_mass_g) %>%
+  filter(species == "Adelie") %>%
+  arrange(body_mass_g)
+```
+
+---
+class:center,middle,inverse
+
+# Grouping and summarizing
+
+---
+# `group_by`
+
+* We have learned how to use the `summarize` functions to get information.
+
+* What if you want to summarize your data within categories?
+
+```{r}
+penguins %>%
+  group_by(species) %>%
+  summarize(mean(body_mass_g))
+
+```
+---
+# Warning!
+
+## You should **always** have a `summarize` after a `group_by`!!!
+
+(There are other ways to use it, but wait until you are very familiar with `dplyr` to try that.)
+
+---
+
+## Try it together on the `iris` dataset
+
+* What is the average Petal Length for the versicolor irises?
+
+* What is the greatest sepal Length for each of the three species of iris in this dataset?
+
+* If we define Petal Area as Petal Length times Petal Width, then what are the top three Petal Areas for each species?
+
+* Try to do each of these in a single chain of pipes!
+
+---
+
+class: center, middle
+
+# Tidy Data for Joining and Pivoting Data
+
+---
+## Tidy Data Principles
+
+1. Every **variable** is a **column**.
+
+--
+
+2. Every **observation** (or **sample**) is a **row**.
+
+--
+
+3. Every **value** is in a **cell**
+
+---
+class: center, middle
+
+![](tidy_data.png)
+
+---
+## Tidy Data
+
+Questions to Ponder:
+
+--
+
+What are the **observational units** in the dataset?
+
+--
+
+* In a database of customer demographic info, perhaps it is the *customers*
+
+--
+
+* In a database of transactions, perhaps it is *unique transaction*, i.e, unique combos of *customer* and *date*
+
+--
+
+What are the **variables** we want to study?
+
+--
+
+* Should we have one *numeric* column called `Customer Balance 2020` and one *numeric* column called `Customer Balance 2021`?
+
+--
+
+* Or should we have one *numeric* column called `Customer Balance` and one *categorical* column called `Date`?
+
+---
+## Example
+
+Consider the following dataset containing health information of cereals:
+
+```{r, echo = FALSE, warning = F, message = F}
+cereals <- read_csv("https://www.dropbox.com/s/ll2c9drmlom1ony/cereals.csv?dl=1") %>%
+  mutate_if(is.numeric, ~na_if(.x, -1))
+head(cereals)
+```
+
+
+---
+
+## Example
+
+Consider the research question:  *How do the sugar and protein contents compare across cereal manufacturers?*
+
+--
+
+```{r, eval = FALSE}
+cereals %>%
+  ggplot(aes(x = sugars, y = protein, color = mfr)) +
+  geom_point()
+```
+
+---
+
+
+```{r, echo = FALSE, warning = F, message = F}
+cereals %>%
+  ggplot(aes(x = sugars, y = protein, color = mfr)) +
+  geom_point()
+```
+
+---
+## Example
+
+
+```{r}
+avg_by_mfr <- cereals %>%
+  group_by(mfr) %>%
+  summarize(
+    mean_sugars = mean(sugars),
+    mean_protein = mean(protein)
+  )
+
+avg_by_mfr
+```
+
+---
+
+
+.pull-left[
+```{r, warning = F}
+avg_by_mfr %>%
+  ggplot(aes(x = mfr, y = mean_sugars)) +
+  geom_col()
+```
+]
+
+.pull-left[
+```{r, warning = F}
+avg_by_mfr %>%
+  ggplot(aes(x = mfr, y = mean_protein)) +
+  geom_col()
+```
+]
+
+---
+## Example
+
+Why are we stuck?
+
+--
+
+Let's return to the **research question**:  How do the nutrient levels (sugar/protein) vary across manufacturers?
+
+--
+
+This question involves **three variables**:
+
+* `manufacturer` - categorical
+
+* `nutrient level`, how many grams of the nutrient in question are present - quantitative
+
+* `nutrient type`, which nutrient we measured - categorical
+
+--
+
+Our data is not **tidy** with respect to this question!
+
+---
+
+class: center, middle, inverse
+
+# Pivoting Longer
+
+---
+## Pivoting Longer
+
+Right now, our cereal data is **wide**: each nutrient is its own column
+
+```{r, echo = FALSE}
+head(cereals)
+```
+
+
+---
+## Pivoting
+
+Our goal is to make it **long**: One column for all values, one column for nutrient type labels.
+
+--
+
+`pivot_longer()` function need to know:
+
+* Which columns are involved in the pivoting
+
+* What you will name the new **values** variable
+
+* What you will name the new **labels** variable
+
+---
+
+## Pivoting
+
+```{r}
+cereals_longer <- cereals %>%
+  select(name, mfr, protein, sugars) %>%
+  pivot_longer(protein:sugars,
+               names_to = "Nutrient",
+               values_to = "Amount")
+
+cereals_longer
+```
+
+---
+
+```{r, eval = FALSE}
+cereals_longer %>%
+  ggplot(aes(x = mfr, y = Amount, fill = Nutrient)) +
+  geom_boxplot()
+```
+
+---
+
+```{r, echo = FALSE, warning = F}
+cereals_longer %>%
+  ggplot(aes(x = mfr, y = Amount, fill = Nutrient)) +
+  geom_boxplot()
+```
+
+---
+
+```{r, eval = FALSE}
+cereals_longer %>%
+  group_by(mfr, Nutrient) %>%
+  summarize(
+    avg_amount = mean(Amount)
+  ) %>%
+  ggplot(aes(x = mfr, y = avg_amount, fill = Nutrient)) +
+  geom_col(position = "dodge")
+```
+
+---
+
+```{r, echo = FALSE, warning = F, message = F}
+cereals_longer %>%
+  group_by(mfr, Nutrient) %>%
+  summarize(
+    avg_amount = mean(Amount)
+  ) %>%
+  ggplot(aes(x = mfr, y = avg_amount, fill = Nutrient)) +
+  geom_col(position = "dodge")
+```
+
+
+---
+
+class: center, middle, inverse
+
+# Pivoting Wider
+
+---
+## Example
+
+Let's now return to the `penguins` dataset:
+
+```{r}
+head(penguins)
+```
+
+---
+## Example
+
+Suppose we want to ask the question,
+
+> How much do female and male bill lengths differ, on average, by species?
+
+--
+
+```{r, message = F}
+avg_bills <- penguins %>%
+  group_by(species, sex) %>%
+  summarize(
+    avg_bill = mean(bill_length_mm)
+  ) 
+
+avg_bills
+
+```
+
+---
+## Example
+
+```{r, eval = FALSE}
+avg_bills %>%
+  group_by(species) %>%
+  mutate(
+    ??????? - ?????
+  )
+
+```
+
+---
+## Example
+
+What went wrong?
+
+--
+
+We wanted to subtract the variable `avg_bill_female` from the variable `avg_bill_male`.
+
+--
+
+But these are not variables!!!
+
+--
+
+Our data is not **tidy** with respect to our research question.
+
+---
+## Example
+
+```{r}
+avg_bills_wider <- avg_bills %>%
+  pivot_wider(names_from = sex,
+              values_from = avg_bill)
+
+avg_bills_wider
+```
+
+---
+## Example
+
+```{r}
+avg_bills_wider <- avg_bills %>%
+  pivot_wider(names_from = sex,
+              values_from = avg_bill,
+              names_prefix = "avg_bill_")
+
+avg_bills_wider
+```
+
+---
+## Example
+
+```{r}
+avg_bills_wider %>%
+  mutate(
+    bill_diff  = avg_bill_male - avg_bill_female
+  ) %>%
+  arrange(bill_diff)
+```
+
+---
+class: center, middle
+
+![](https://www.fromthebottomoftheheap.net/assets/img/posts/original-dfs-tidy.png)
+
+---
+class: center, middle
+
+![](https://www.fromthebottomoftheheap.net/assets/img/posts/tidyr-longer-wider.gif)
+---
+
+class: center, middle, inverse
+
+## Joining Datasets
+
+---
+
+
+
+## Left Join (and Right Join)
+
+A **left join** prioritizes the **first** dataset.
+
+--
+
+We use it when we are trying to add information from Dataset B into Dataset A,
+without changing the structure of Dataset A.
+
+--
+
+`left_join()` in `dplyr`
+
+--
+
+A **right join** is the same thing, but prioritizing the **second** dataset.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/left-join.gif)
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/left-join-extra.gif)
+
+---
+
+## Full Join
+
+A **full join** retains **all information** in **either dataset**.
+
+--
+
+`full_join()` in `dplyr`
+
+--
+
+It is used when you have data from two sources, and you want to combine them into one dataset.
+
+--
+
+Note:  Missing information becomes "NA"!
+
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/full-join.gif)
+
+---
+
+## Inner Join
+
+An **inner join** retains only information for the observations that appear in **both datasets**.
+
+--
+
+`inner_join()` in `dplyr`
+
+--
+
+Careful!  If your subject isn't in **both** Dataset A and Dataset B, the info will be lost!
+
+--
+
+This is used to create a dataset with *no missing information*
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/inner-join.gif)
+
+---
+
+## Semi Join
+
+An **semi join** is the same as an inner join, but it does not keep the variables from the second dataset.
+
+--
+
+`semi_join()` in `dplyr`
+
+--
+
+Dataset B is being used to reduce Dataset A, but none of its other information is retained.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/semi-join.gif)
+
+---
+
+## Anti Join
+
+An **anti join** retains only information that appears in **one, but not both** of the datasets.
+
+--
+
+`anti_join()` in `dplyr`
+
+--
+
+It is rarely practical as a data creation.
+
+--
+
+Instead, we use it as a shortcut to answer questions about which observations are not in both datasets.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/anti-join.gif)
+
+---
+
+class: center, middle, inverse
+# Data Types and Base R Syntax
+
+---
+# Data Types
+
+Does your data consist of...
+
+--
+
+* numbers?
+    + integers?
+    + doubles?
+    
+--
+
+* words?
+    + characters/string?
+    + factor?
+    
+--
+
+* `TRUE` or `FALSE` values (*boolean*)?
+
+--
+
+* something else???
+    + Dates and times?
+    + Images?
+    
+
+---
+# Data Types: Numeric
+
+```{r}
+
+a <- 5.5
+
+class(a)
+
+typeof(a)
+
+str(a)
+
+```
+
+---
+# Data Types: Numeric
+  
+```{r}
+
+is.numeric(a)
+
+is.double(a)
+```
+
+---
+# Data Types: Numeric
+
+*What do you think will happen?*
+
+```{r, eval = FALSE}
+a <- 5
+
+is.integer(a)
+```
+
+--
+
+```{r, echo = FALSE}
+a <- 5
+
+is.integer(a)
+```
+
+---
+
+# Data Types: Numeric
+
+Integers are special:
+
+
+```{r, echo = FALSE}
+decorate('a <- 5L') %>%
+  flair("L")
+
+```
+
+```{r}
+is.integer(a)
+
+typeof(a)
+```
+
+
+--
+
+It is rarely important to make the distinction between integers and doubles.
+
+---
+# Data Types: Boolean
+
+For Boolean data , you should think of the data as having values `0` (`FALSE`) or `1` (`TRUE`).
+
+```{r}
+is_5 <- a == 5
+
+is_5
+
+class(is_5)
+
+as.integer(is_5)
+
+is_5 + 1
+```
+
+
+
+---
+# Data Types: Character
+
+```{r}
+my_word <- "Hunter"
+
+class(my_word)
+
+```
+
+--
+
+```{r}
+
+my_sentence <- "Hi, I'm Hunter!"
+
+class(my_sentence)
+```
+--
+Another word for a **character** type object is a **string**.
+
+
+---
+# Data Types: Factors
+
+
+```{r, echo = FALSE}
+library(palmerpenguins)
+```
+
+```{r}
+head(penguins)
+```
+
+
+---
+# Data Types: Factors
+
+Not just *any* string, but specifically defined **categories**.
+
+```{r}
+class(penguins$species)
+
+levels(penguins$species)
+
+str(penguins$species)
+```
+
+
+---
+# Data Types: Factors
+
+Warning:  Factors are *weird*
+
+```{r}
+as.character(penguins$species)
+```
+---
+# Data Types: Factors
+
+Warning:  Factors are *weird*
+
+```{r}
+as.integer(penguins$species)
+```
+
+---
+class: center, middle
+# Object Structures
+
+---
+
+# Object Structures
+
+Is your object a...
+
+* function?
+
+* vector?
+
+* list?
+
+* data frame?
+
+* matrix?
+
+---
+# Vectors
+
+A **vector** is a set of values that are all the same **type**
+
+```{r, error  = TRUE}
+my_vec <- c("a", "b", "c")
+
+str(my_vec)
+
+my_vec <- c(1, 3, 5)
+
+str(my_vec)
+
+my_vec <- c(1, "a")
+
+str(my_vec)
+```
+
+---
+# Vectors
+
+A vector with only one **element** is called an **atomic vector**.
+
+```{r, error  = TRUE}
+
+my_vec <- 1
+
+str(my_vec)
+
+my_vec[1]
+
+```
+
+---
+
+# Matrices
+
+A **matrix** is a **two-dimensional** set of values that are all the same type.
+
+
+
+```{r, error  = TRUE}
+my_mat <- matrix(c("a", "b", "c", "d"), nrow = 2, ncol = 2)
+
+str(my_mat)
+```
+
+--
+Note: If turning  vector into a matrix, be careful with rows and columns!
+
+```{r}
+my_mat
+```
+
+
+---
+# Lists
+
+A **list** is the the **most general** object.  Any structure and any data type can be stored in a list!
+
+```{r}
+my_list <- list(
+  a = "Well hi there",
+  b = 1:10,
+  c = my_mat
+)
+
+my_list
+```
+
+---
+# Lists
+
+```{r}
+str(my_list)
+
+my_list$a
+```
+
+---
+# Lists: brackets
+
+What is the difference between the following two ways of accessing information in a list?
+
+```{r}
+my_list[[2]]
+
+my_list[2]
+```
+
+---
+# Lists: brackets
+
+What is the difference between the following two ways of accessing information in a list?
+
+```{r}
+str(my_list[[2]])
+```
+
+--
+
+```{r}
+
+str(my_list[2])
+```
+
+---
+class: center, middle
+
+# Troubleshooting Errors
+
+---
+
+# Syntax Errors
+
+* Did you leave off a parenthesis?
+
+```{r, echo = FALSE}
+decorate('rnorm(10, mean = 5', eval = FALSE) %>%
+  flair("(")
+```
+
+```{r, echo = FALSE, error = TRUE}
+
+rnorm(10, mean = 5
+
+```
+
+
+---
+
+# Syntax Errors
+
+* Did you leave off a comma?
+
+```{r, echo = FALSE, error = TRUE}
+decorate('rnorm(10 mean = 5)', eval = FALSE) %>%
+  flair(" mean")
+```
+
+```{r, echo = FALSE, error = TRUE}
+
+rnorm(10 mean = 5)
+
+```
+
+
+---
+
+# Syntax Errors
+
+* Did you make a typo?
+
+
+```{r, echo = FALSE}
+decorate('rnrom(10, mean = 5)', eval = FALSE) %>%
+  flair("rnrom")
+```
+
+```{r, echo = FALSE, error = TRUE}
+
+rnrom(10, mean = 5)
+
+```
+
+---
+# Object type errors
+
+* Are you using the right **input** that the function expects?
+
+```{r, echo = FALSE}
+decorate("rnorm('hi', mean = 5)", eval = FALSE) %>%
+  flair("'hi'")
+```
+
+```{r, echo = FALSE, error = TRUE}
+
+rnorm('hi', mean = 5)
+
+```
+
+---
+# Object type errors
+
+* Are you expecting the right **output** of the function?
+
+```{r closure, echo = FALSE, error = TRUE}
+
+my_obj <- rnorm(10, mean = 5)
+
+my_obj(5)
+
+```
+
+```{r, echo = FALSE}
+decorate("closure") %>%
+  flair("my_obj(5)")
+```
+
+---
+class: center, middle
+
+# Errors, warnings, and messages
+
+---
+# Messages
+
+Just because you see scary red text, this does **not** mean something went wrong!  
+
+This is just **R** communicating with you.
+
+--
+
+For example, you often see a lot of messages after:
+
+```{r}
+library(tidyverse)
+```
+
+---
+# Warnings
+
+Often, **R** will give you a **warning**.
+
+--
+
+This means that your code *did* run...
+
+--
+
+...but you probably want to make sure it succeeded.
+
+---
+# Warnings
+
+
+```{r}
+my_vec <- c("a", "b", "c")
+
+my_new_vec <- as.integer(my_vec)
+```
+
+--
+
+```{r}
+my_new_vec
+```
+
+---
+# Errors
+
+If the word **Error** appears in your message from **R**, then you have a problem.
+
+--
+
+This means your code **could not run**!
+
+--
+
+```{r, error = TRUE}
+my_vec <- c("a", "b", "c")
+
+my_new_vec <- my_vec + 1
+```
+---
+class: center, middle
+
+## Parlez-vous ERROR?
+
+Error messages can be confusing!
+
+---
+# Translations
+
+**R** says...
+
+> Error: Object 'some_obj' not found.
+
+It *probably* means...
+
+> You haven't run the code to create 'some_obj'  OR you have a typo in the name!
+
+--
+
+```{r, error = TRUE}
+some_ojb <- 1:10
+
+mean(some_obj)
+```
+
+---
+# Translations
+
+**R** says...
+
+> Error: Object of type 'closure' is not subsettable.
+
+It *probably* means...
+
+> Oops, you tried to use square brackets on a function
+
+--
+
+```{r, error = TRUE}
+mean[1,2]
+```
+
+---
+# Translations
+
+**R** says...
+
+> Error: Non-numeric argument to binary operator
+
+It *probably* means...
+
+> You tried to do math on data that isn't numeric.
+
+--
+
+```{r, error = TRUE}
+"a" + 2
+```
+
+---
+# Okay, now what?
+
+When all else fails, **Google** your error message.
+
+--
+
+* Leave out the specifics.
+
+--
+
+* Include the function you are using.
+
+
+---
+# Try it...
+
+*What's wrong here?*
+
+```{r, error = TRUE}
+matrix(c("a", "b", "c", "d"), num_row = 2)
+```

@@ -1,0 +1,475 @@
+---
+title: "Data Wrangling with the Tidyverse"
+format: 
+  revealjs:
+    theme: sky
+filters:
+  - flourish
+execute: 
+  echo: true
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(palmerpenguins)
+library(here)
+```
+
+
+## The tidyverse
+
+* One philosophy of the **tidyverse** is building **pipe-friendly** functions.
+
+* Another philosophy is using **English verbs** as function names instead of symbols or abbreviations.
+
+* Some consider this more accessible/readable
+
+
+```{r}
+#| eval: false
+penguins |>
+  filter(species == "Adelie")
+```
+
+
+```{r}
+#| eval: false
+
+penguins[penguins$species == "Adelie",]
+```
+
+
+
+## The tidyverse
+
+**Pros:**
+
+* Fairly consistent behavior of functions
+
+    + Predictable **input** and **output** types
+    + *"opinionated"*
+    
+* Semi-guaranteed maintenance of packages
+
+(because *Posit, PBC* pays developers!)
+
+* More available and polished documentation and tutorials
+
+
+* Welcoming community
+
+
+## The tidyverse
+
+**Cons:**
+
+* Sometimes less flexible for complex tasks
+
+* For big data, there are faster options
+
+* Updates frequently -> sometimes this makes your old code unrunnable.
+
+* Some people object to **Posit**'s strong influence over an open-source community.
+
+
+## Should you use the tidyverse???
+
+
+Even the most die-hard tidyverse fanatics use base R and other packages quite frequently.
+
+. . . 
+
+Above all, the best code approach is the one that
+
+- you enjoy the most 
+
+- gets job done
+
+- lets you collaborate with colleagues.
+
+
+
+
+
+# Cleaning and transforming data
+
+<img src="https://d33wubrfki0l68.cloudfront.net/071952491ec4a6a532a3f70ecfa2507af4d341f9/c167c/images/hex-dplyr.png" width=300>
+
+
+## Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the `tidyverse`)
+
+![](Images/ceci_pipe.jpeg)
+![](Images/magrittr_hex.png)
+
+
+## Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the tidyverse)
+
+* Idea:  The **data** is the primary object, so it should come first in your code.
+
+* Idea:  Code should read **like a sentence**
+
+
+## The Pipe
+
+```{r}
+#| eval: false
+#| flourish:
+#| - target: "summary"
+
+penguins |> summary()
+```
+
+is the same as
+
+```{r}
+#| eval: false
+#| flourish:
+#| - target: "summary"
+
+summary(penguins)
+```
+
+
+## The Pipe
+
+What do you think the following will do?
+
+```{r}
+#| eval: false
+#| echo: true
+
+penguins |>
+  filter(species == "Adelie") |>
+  arrange(body_mass_g)
+```
+
+
+## The Pipe
+
+What do you think the following will do?
+
+```{r}
+#| echo: true
+penguins |>
+  filter(species == "Adelie") |>
+  arrange(body_mass_g)
+```
+
+
+# Summarizing
+
+## Data Cleaning 1: missing data
+
+```{r}
+#| echo: true
+#| flourish:
+#| - target: "y"
+
+penguins |> summary()
+```
+
+## Data Cleaning: missing data
+
+Oh no!  There was one row of the dataset with missing values.
+
+. . .
+
+There is no magic answer for how to handle missing values; one solution is to simply drop them from the data.
+
+*Consider - why might this sometimes be a bad idea?*
+
+. . .
+
+```{r}
+penguins <- penguins |> drop_na()
+penguins |> summary()
+```
+
+
+
+## Summarizing specific variables
+
+```{r}
+#| flourish:
+#| - target: "ize"
+#| - target: 
+#|   - "mean(body_mass_g)"
+#|   - style:
+#|       - "background-color: #FFC0CB;"
+
+penguins |>
+  summarize(
+    mean_mass = mean(body_mass_g)
+    )
+
+```
+
+
+## Many variables?  Many summary statistics?
+
+
+```{r}
+#| flourish:
+#| - target: "across"
+#| - target: "list"
+
+
+penguins |>
+  summarize(across(c(body_mass_g, flipper_length_mm),
+            list(mean, median)))
+
+```
+
+
+# Making new variables
+
+## Verb: `mutate()`
+
+The dataset gets *mutated* to include a new variable.
+
+```{r}
+#| flourish:
+#| - target: "mutate"
+
+penguins |>
+  mutate(
+    bill_size = bill_length_mm * bill_depth_mm
+  ) |>
+  summary()
+```
+
+## Making new variables
+
+Cool, let's look at our new variable!
+
+```{r}
+#| error: true
+penguins |>
+  summarize(mean_bill = sd(bill_size))
+```
+
+. . .
+
+OH NO!
+
+**What happened here?**
+
+
+
+
+# We calculated a new variable, but didn't reassign the data object
+
+## Making new variables
+
+```{r}
+#| flourish:
+#| - target: "- penguins"
+
+penguins <- penguins |>
+          mutate(
+            bill_size = bill_length_mm * bill_depth_mm
+          )
+          
+penguins |>
+  summarize(mean_bill = sd(bill_size))
+
+
+```
+
+## Using `mutate` to clean data
+
+One common use of `mutate` is to make sure our *data types* are correct.
+
+Most often, this involves turning `character` variables into `factor` variables:
+
+```{r}
+#| flourish:
+#| - target: "factor"
+
+penguins <- penguins |>
+          mutate(
+            species = factor(species)
+          )
+          
+```
+
+
+## `case_when` 
+
+A common use of `mutate()` is to turn a *quantitative* variable into a *categorical* one
+
+`case_when` makes this process easier.
+
+```{r}
+#| eval: false
+#| flourish:
+#| - target: "case_when"
+#| - target: "~"
+
+
+penguins |>
+  mutate(
+    size = case_when(
+      body_mass_g < 3000 ~ "Tiny",
+      body_mass_g < 5000 ~ "Medium",
+      body_mass_g < 7000 ~ "Whomper"
+    )
+  ) 
+```
+
+## `case_when`
+
+```{r}
+#| echo: false
+
+
+penguins |>
+  mutate(
+    size = case_when(
+      body_mass_g < 3000 ~ "Tiny",
+      body_mass_g < 5000 ~ "Medium",
+      body_mass_g < 7000 ~ "Whomper"
+    )
+  ) |> 
+  select(species, island, body_mass_g, size) |>
+  group_by(size) |>
+  sample_n(2) |>
+  ungroup()
+```
+
+
+
+# Ordering columns
+
+## Verb: `arrange()`
+
+We **arrange** the dataset in order of a particular variable.
+
+```{r}
+#| flourish:
+#| - target: "arrange"
+
+penguins |> 
+  arrange(body_mass_g)
+```
+
+
+## Related: `slice_max` and `slice_min`
+
+```{r}
+penguins |>
+  slice_max(body_mass_g, n = 3)
+```
+
+
+## Quick check in!
+
+Remember,
+
+```{r}
+#| eval: false
+penguins |>
+  slice_max(body_mass_g, n = 3)
+```
+
+is the same as
+
+```{r}
+#| eval: false
+slice_max(penguins, body_mass_g, n = 3)
+```
+
+
+# Selecting focus columns
+
+## Verb: `select()`
+
+We **select** which variables we would like to remain in the dataset.
+
+```{r}
+#| flourish:
+#| - target: "select"
+
+penguins |>
+  select(species, body_mass_g) |>
+  arrange(body_mass_g)
+```
+
+
+# Filtering
+
+## Verb: `filter()`
+
+We **filter** to the rows (observations) we would like to **keep** in the dataset.
+
+```{r}
+#| flourish:
+#| - target: "filter"
+
+penguins |>
+  select(species, body_mass_g) |>
+  filter(species == "Adelie") |>
+  arrange(body_mass_g)
+```
+
+
+# Grouping and summarizing
+
+
+## Verb: `group_by`
+
+Before we do something like `summarize`, we `group_by` a **categorical** variable.
+
+```{r}
+#| flourish:
+#| - target: "group_by"
+penguins |>
+  group_by(species) |>
+  summarize(mean(body_mass_g))
+
+```
+
+## Warning!
+
+You should **always** have a `summarize` after a `group_by`!!!
+
+(There are other ways to use it, but wait until you are very familiar with `dplyr` to try that.)
+
+
+
+## Try it together!
+
+
+* What is the average Petal Length for the versicolor irises?
+
+* What is the greatest sepal Length for each of the three species of iris in this dataset?
+
+* If we define Petal Area as Petal Length times Petal Width, then what are the top three Petal Areas for each species?
+
+* Try to do each of these in a single chain of pipes!
+
+## Your turn!
+
+Open `03-Wrangling.qmd` and try to answer the questions about the hiphop dataset!
+
+*Hint: Think carefully about what each row represents. You may need to start with
+a `filter()` or `distinct()` step.*
+
+
+## What comes next?
+
+* Special **data types**: Strings, factors, dates.
+
+* Data **reshaping**: Pivoting, joining.
+
+* Resources:
+    + [My course materials](https://www.adventures-in-r.com/post/03-tidy-factors/)
+    + [R for Data Science](https://r4ds.hadley.nz/)
+
+
+

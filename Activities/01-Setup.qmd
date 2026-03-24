@@ -1,0 +1,58 @@
+---
+title: "Setup and Quarto Practice"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+## Libraries
+
+To use an external *package* (a.k.a. a "library") we first need to install it.
+
+In your **console** (NOT IN THIS QUARTO DOCUMENT!) run
+
+> install.packages("tidyverse")
+
+Once that is done, run the following code chunk:
+
+```{r}
+#| label: libraries
+
+library(tidyverse)
+```
+
+
+To see if that worked, run the following without editing it:
+
+```{r}
+iris |>
+  group_by(Species) |>
+  summarize(
+    mean_petal_length = mean(Petal.Length, na.rm = TRUE)
+  )
+```
+
+Now, **render** this document.  Pay attention to where it is saved, and how the 
+html file looks.
+

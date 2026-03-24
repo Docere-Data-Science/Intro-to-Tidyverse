@@ -1,0 +1,215 @@
+---
+title: "Projects, Directories, Data Files"
+format: 
+  revealjs:
+    theme: sky
+execute:
+  include: true
+  echo: true
+  eval: true
+---
+
+## Principles of Reproducibility
+
+The idea:  You should be able to send your project to someone else, and they can jump in and start working right away.
+
+1. Files are organized and well-named.
+
+2. References to data and code work for everyone.
+
+3. Package dependency is clear.
+
+4. Code will run the same every time, even if data values change.
+
+5. Analysis process is well-explained and easy to read.
+
+```{r}
+#| include: false
+library(tidyverse)
+```
+
+
+## Good practice
+
+- Organize your folders carefully, and name them meaningfully:  
+    + `/User/kbodwin/Dropbox/Workshops/` rather than `Desktop/stuff/`
+    
+- Use **R Projects** liberally - put one in the "main" folder for each project
+
+    + I have a project for every class I teach.
+    + I have a project for every data analysis I do.
+    + I **never** open RStudio, except by clicking on a project.
+
+## Bad practice
+
+If you put something like this at the top of your .Rmd file, I will set your computer on fire:
+
+```{r}
+#| eval: false
+#| echo: true
+setwd("/User/reginageorge/Desktop/R_Class/Lab_1/")
+```
+
+- Setting working directory by hand = BAD!  
+
+- That directory is specific to you!
+
+- (Quarto files may not render this code.)
+
+
+# Locating your data files
+ 
+## read_csv()
+
+- The *tidyverse* way to read data is with `read_csv()`.
+
+- To tell this function where to find the data, you can give a **url** to the dataset, or a **path**.
+
+```{r}
+#| eval: false
+#| echo: true
+hiphop <- read_csv("https://www.dropbox.com/s/1qqyshx5ikt9zoc/hiphop.csv?dl=1")
+## This will work for everyone!
+
+```
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+
+hiphop <- read_csv("/Users/kbodwin/Dropbox/Data/hiphop.csv")
+## This will work only on my computer
+
+```
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+
+hiphop <- read_csv("hiphop.csv")
+## This will work if the file is in the same directory as the code (i.e., the project directory)
+```
+
+. . .
+
+```{r}
+#| eval: false
+#| echo: true
+
+hiphop <- read_csv("./Data/hiphop.csv")
+## This will work if a folder called "Data" is in the same directory as the code.
+```
+
+
+## The **here** package
+
+A great solution to consistency in paths is the `here` package:
+
+> install.packages("here")
+
+This package thinks that *"here"* means *"the directory of the closest project"*.
+
+```{r}
+#| message: true
+here::dr_here()
+```
+
+
+## The **here** package
+
+These slides live in a subfolder called `Slides`.
+
+The *data* is not in this folder!
+
+. . .
+
+If I wanted to access a dataset from my main Data folder, I'd have to use a relative file path:
+
+```{r}
+#| eval: false
+hiphop <- read_csv("../../Data/hiphop.csv")
+```
+
+. . .
+
+If I ever reshuffle my folder structure, I'm in trouble!
+
+
+## The **here** package
+
+Instead of trying to reference data relative to **this** file, let's reference it relative to the **Project** location, which is unlikely to change.
+
+```{r}
+#| eval: false
+here::here("Data", "hiphop.csv")
+```
+
+. . .
+
+```{r}
+#| eval: false
+hiphop <- read_csv(here::here("Data", "hiphop.csv"))
+```
+
+This will **adapt** to each person's path!
+
+
+
+# Reading in data
+
+
+
+## Common types of data files
+
+- `.csv` :  "Comma-separated"
+```
+Name, Age
+Bob, 49
+Joe, 40
+```
+
+
+## Common types of data files
+
+- `.txt`:  Plain text
+    + Could be just text
+    + Could be comma-separated data
+    + Could be tab-separated, bar-separated, etc.
+    + Need to let R know what to look for
+
+- `.xls, .xlsx`:  Microsoft Excel Spreadsheet
+    + Common approach: save as `.csv`
+    + Nicer approach:  `readxl` package
+
+
+
+## Separators
+
+- Tell R what symbol separates data observations with `delim = `
+
+```{r}
+#| eval: false
+hiphop <- read_csv("hiphop.csv", delim = ",")
+hiphop <- read.table("hiphop.csv", delim = "\t")  
+## if tabs between data
+```
+
+
+## Try it together!
+
+Your `Data` folder contains several datasets containing the names and ages of five men.  The datasets are stored as different file types.  
+
+1. Read in the dataset `ages.csv`.
+2. Read in the dataset `ages_tab.txt`
+3. Read in the dataset `ages_mystery.txt`
+4. Find a way to use `read_csv` to read `ages.csv` with the variable "Name" as a factor and "Age" as a character.
+5. *(Optional)* Read in the dataset `ages.xlsx`
+
+
+## Your Turn
+
+Open the Activity `02-Explore_Data.qmd` to see a few summaries of this dataset.

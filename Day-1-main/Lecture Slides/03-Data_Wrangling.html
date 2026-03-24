@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Data Wrangling with the Tidyverse</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Data Wrangling with the Tidyverse
+
+---
+
+
+
+
+
+
+# The tidyverse
+
+* One philosophy of the **tidyverse** is building **pipe-friendly** functions.
+
+* Another philosophy is using **English verbs** as function names instead of symbols or abbreviations.
+
+* Some consider this more accessible/readable
+
+
+```r
+penguins %&gt;%
+  filter(species == "Adelie")
+```
+
+
+```r
+penguins[penguins$species == "Adelie",]
+```
+
+
+---
+# The tidyverse
+
+**Pros:**
+
+* Fairly consistent behavior of functions
+
+    + Predictable **input** and **output** types
+    + *"opinionated"*
+    + More on this later
+    
+--
+
+* Semi-guaranteed maintenance of packages
+
+(because RStudio pays developers!)
+
+--
+
+* More available and polished documentation and tutorials
+
+--
+
+* Welcoming community
+
+---
+# The tidyverse
+
+**Cons:**
+
+* Sometimes less flexible for complex tasks
+
+--
+
+* Generally slower, especially on big data
+
+--
+
+* Updates frequently -&gt; sometimes this makes your old code unrunnable.
+
+--
+
+* Some people object to **RStudio**'s strong influence over an open-source community.
+
+---
+class: center, middle
+
+# Should you use the tidyverse???
+
+--
+
+Even the most die-hard tidyverse fanatics use base R and other packages quite frequently.
+
+--
+
+Above all, the best code approach is the one that
+
+- you enjoy the most 
+
+- gets job done
+
+- lets you collaborate with colleagues.
+
+
+
+---
+
+class: center, middle, invert
+
+# Cleaning and transforming data
+
+&lt;img src="https://d33wubrfki0l68.cloudfront.net/071952491ec4a6a532a3f70ecfa2507af4d341f9/c167c/images/hex-dplyr.png" width=300&gt;
+
+
+---
+class: center, middle, inverse
+
+# Prerequisite:  The Pipe  `%&gt;%`
+
+---
+# Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the tidyverse)
+
+---
+
+&lt;img src="C:/Users/kbodwin/Dropbox/Adventures_in_R/UPS_Trainings/Day-1/Lecture Slides/Images/ceci_pipe.jpeg" width="70%" style="display: block; margin: auto;" /&gt;
+
+---
+
+&lt;img src="C:/Users/kbodwin/Dropbox/Adventures_in_R/UPS_Trainings/Day-1/Lecture Slides/Images/magrittr_hex.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+---
+# Prerequisite: The Pipe
+
+* Part of the `magrittr` package (installs with the tidyverse)
+
+--
+
+* Idea:  The **data** is the primary object, so it should come first in your code.
+
+--
+
+* Idea:  Code should read **like a sentence**
+
+---
+
+# The Pipe
+
+
+&lt;code class ='r hljs remark-code'&gt;penguins &lt;span style="background-color:#ffff7f"&gt;%&gt;%&lt;/span&gt; &lt;span style="color:teal"&gt;summary&lt;/span&gt;()&lt;/code&gt;
+
+is the same as
+
+
+&lt;code class ='r hljs remark-code'&gt;&lt;span style="color:teal"&gt;summary&lt;/span&gt;(penguins)&lt;/code&gt;
+
+---
+# The Pipe
+
+What do you think the following will do?
+
+
+```r
+penguins %&gt;%
+  filter(species == "Adelie") %&gt;%
+  arrange(body_mass_g)
+```
+
+---
+# The Pipe
+
+What do you think the following will do?
+
+
+```r
+penguins %&gt;%
+  filter(species == "Adelie") %&gt;%
+  arrange(body_mass_g)
+```
+
+```
+## # A tibble: 152 x 8
+##    species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g
+##    &lt;fct&gt;   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;int&gt;       &lt;int&gt;
+##  1 Adelie  Biscoe              36.5          16.6               181        2850
+##  2 Adelie  Biscoe              36.4          17.1               184        2850
+##  3 Adelie  Biscoe              34.5          18.1               187        2900
+##  4 Adelie  Dream               33.1          16.1               178        2900
+##  5 Adelie  Torgersen           38.6          17                 188        2900
+##  6 Adelie  Biscoe              37.9          18.6               193        2925
+##  7 Adelie  Dream               37.5          18.9               179        2975
+##  8 Adelie  Dream               37            16.9               185        3000
+##  9 Adelie  Dream               37.3          16.8               192        3000
+## 10 Adelie  Torgersen           35.9          16.6               190        3050
+## # ... with 142 more rows, and 2 more variables: sex &lt;fct&gt;, year &lt;int&gt;
+```
+
+
+---
+
+# Summarizing
+
+
+&lt;code class ='r hljs remark-code'&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;summar&lt;span style="background-color:#ffff7f"&gt;y(&lt;/span&gt;)&lt;/code&gt;
+
+```
+
+##       species          island    bill_length_mm  bill_depth_mm  
+##  Adelie   :152   Biscoe   :168   Min.   :32.10   Min.   :13.10  
+##  Chinstrap: 68   Dream    :124   1st Qu.:39.23   1st Qu.:15.60  
+##  Gentoo   :124   Torgersen: 52   Median :44.45   Median :17.30  
+##                                  Mean   :43.92   Mean   :17.15  
+##                                  3rd Qu.:48.50   3rd Qu.:18.70  
+##                                  Max.   :59.60   Max.   :21.50  
+##                                  NA's   :2       NA's   :2      
+##  flipper_length_mm  body_mass_g       sex           year     
+##  Min.   :172.0     Min.   :2700   female:165   Min.   :2007  
+##  1st Qu.:190.0     1st Qu.:3550   male  :168   1st Qu.:2007  
+##  Median :197.0     Median :4050   NA's  : 11   Median :2008  
+##  Mean   :200.9     Mean   :4202                Mean   :2008  
+##  3rd Qu.:213.0     3rd Qu.:4750                3rd Qu.:2009  
+##  Max.   :231.0     Max.   :6300                Max.   :2009  
+##  NA's   :2         NA's   :2
+
+```
+
+---
+# Cleaning 1: missing data
+
+Oh no!  There was one row of the dataset with missing values.
+
+--
+
+There is no magic answer for how to handle missing values; one solution is to simply drop them from the data.
+
+*Consider - why might this sometimes be a bad idea?*
+
+--
+
+
+```r
+penguins &lt;- 
+  penguins %&gt;%
+  drop_na()
+
+penguins %&gt;% summary()
+```
+
+```
+##       species          island    bill_length_mm  bill_depth_mm  
+##  Adelie   :146   Biscoe   :163   Min.   :32.10   Min.   :13.10  
+##  Chinstrap: 68   Dream    :123   1st Qu.:39.50   1st Qu.:15.60  
+##  Gentoo   :119   Torgersen: 47   Median :44.50   Median :17.30  
+##                                  Mean   :43.99   Mean   :17.16  
+##                                  3rd Qu.:48.60   3rd Qu.:18.70  
+##                                  Max.   :59.60   Max.   :21.50  
+##  flipper_length_mm  body_mass_g       sex           year     
+##  Min.   :172       Min.   :2700   female:165   Min.   :2007  
+##  1st Qu.:190       1st Qu.:3550   male  :168   1st Qu.:2007  
+##  Median :197       Median :4050                Median :2008  
+##  Mean   :201       Mean   :4207                Mean   :2008  
+##  3rd Qu.:213       3rd Qu.:4775                3rd Qu.:2009  
+##  Max.   :231       Max.   :6300                Max.   :2009
+```
+
+---
+# Cleaning 2: What's in a name?
+
+The column names in the `penguins` dataset are nice for a few reasons:
+
+
+```
+## [1] "species"           "island"            "bill_length_mm"   
+## [4] "bill_depth_mm"     "flipper_length_mm" "body_mass_g"      
+## [7] "sex"               "year"
+```
+
+* No capital letters
+
+* Underscores to separate words
+
+* Short but descriptive
+
+
+--
+
+What if they weren't?
+
+---
+# Cleaning 2: What's in a name?
+
+
+```
+## [1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"  "Species"
+```
+--
+
+The `janitor` package!
+
+
+```r
+library(janitor)
+```
+
+```
+## Warning: package 'janitor' was built under R version 4.0.2
+```
+
+```
+## 
+## Attaching package: 'janitor'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     chisq.test, fisher.test
+```
+
+```r
+iris %&gt;%
+  clean_names
+```
+
+```
+##     sepal_length sepal_width petal_length petal_width    species
+## 1            5.1         3.5          1.4         0.2     setosa
+## 2            4.9         3.0          1.4         0.2     setosa
+## 3            4.7         3.2          1.3         0.2     setosa
+## 4            4.6         3.1          1.5         0.2     setosa
+## 5            5.0         3.6          1.4         0.2     setosa
+## 6            5.4         3.9          1.7         0.4     setosa
+## 7            4.6         3.4          1.4         0.3     setosa
+## 8            5.0         3.4          1.5         0.2     setosa
+## 9            4.4         2.9          1.4         0.2     setosa
+## 10           4.9         3.1          1.5         0.1     setosa
+## 11           5.4         3.7          1.5         0.2     setosa
+## 12           4.8         3.4          1.6         0.2     setosa
+## 13           4.8         3.0          1.4         0.1     setosa
+## 14           4.3         3.0          1.1         0.1     setosa
+## 15           5.8         4.0          1.2         0.2     setosa
+## 16           5.7         4.4          1.5         0.4     setosa
+## 17           5.4         3.9          1.3         0.4     setosa
+## 18           5.1         3.5          1.4         0.3     setosa
+## 19           5.7         3.8          1.7         0.3     setosa
+## 20           5.1         3.8          1.5         0.3     setosa
+## 21           5.4         3.4          1.7         0.2     setosa
+## 22           5.1         3.7          1.5         0.4     setosa
+## 23           4.6         3.6          1.0         0.2     setosa
+## 24           5.1         3.3          1.7         0.5     setosa
+## 25           4.8         3.4          1.9         0.2     setosa
+## 26           5.0         3.0          1.6         0.2     setosa
+## 27           5.0         3.4          1.6         0.4     setosa
+## 28           5.2         3.5          1.5         0.2     setosa
+## 29           5.2         3.4          1.4         0.2     setosa
+## 30           4.7         3.2          1.6         0.2     setosa
+## 31           4.8         3.1          1.6         0.2     setosa
+## 32           5.4         3.4          1.5         0.4     setosa
+## 33           5.2         4.1          1.5         0.1     setosa
+## 34           5.5         4.2          1.4         0.2     setosa
+## 35           4.9         3.1          1.5         0.2     setosa
+## 36           5.0         3.2          1.2         0.2     setosa
+## 37           5.5         3.5          1.3         0.2     setosa
+## 38           4.9         3.6          1.4         0.1     setosa
+## 39           4.4         3.0          1.3         0.2     setosa
+## 40           5.1         3.4          1.5         0.2     setosa
+## 41           5.0         3.5          1.3         0.3     setosa
+## 42           4.5         2.3          1.3         0.3     setosa
+## 43           4.4         3.2          1.3         0.2     setosa
+## 44           5.0         3.5          1.6         0.6     setosa
+## 45           5.1         3.8          1.9         0.4     setosa
+## 46           4.8         3.0          1.4         0.3     setosa
+## 47           5.1         3.8          1.6         0.2     setosa
+## 48           4.6         3.2          1.4         0.2     setosa
+## 49           5.3         3.7          1.5         0.2     setosa
+## 50           5.0         3.3          1.4         0.2     setosa
+## 51           7.0         3.2          4.7         1.4 versicolor
+## 52           6.4         3.2          4.5         1.5 versicolor
+## 53           6.9         3.1          4.9         1.5 versicolor
+## 54           5.5         2.3          4.0         1.3 versicolor
+## 55           6.5         2.8          4.6         1.5 versicolor
+## 56           5.7         2.8          4.5         1.3 versicolor
+## 57           6.3         3.3          4.7         1.6 versicolor
+## 58           4.9         2.4          3.3         1.0 versicolor
+## 59           6.6         2.9          4.6         1.3 versicolor
+## 60           5.2         2.7          3.9         1.4 versicolor
+## 61           5.0         2.0          3.5         1.0 versicolor
+## 62           5.9         3.0          4.2         1.5 versicolor
+## 63           6.0         2.2          4.0         1.0 versicolor
+## 64           6.1         2.9          4.7         1.4 versicolor
+## 65           5.6         2.9          3.6         1.3 versicolor
+## 66           6.7         3.1          4.4         1.4 versicolor
+## 67           5.6         3.0          4.5         1.5 versicolor
+## 68           5.8         2.7          4.1         1.0 versicolor
+## 69           6.2         2.2          4.5         1.5 versicolor
+## 70           5.6         2.5          3.9         1.1 versicolor
+## 71           5.9         3.2          4.8         1.8 versicolor
+## 72           6.1         2.8          4.0         1.3 versicolor
+## 73           6.3         2.5          4.9         1.5 versicolor
+## 74           6.1         2.8          4.7         1.2 versicolor
+## 75           6.4         2.9          4.3         1.3 versicolor
+## 76           6.6         3.0          4.4         1.4 versicolor
+## 77           6.8         2.8          4.8         1.4 versicolor
+## 78           6.7         3.0          5.0         1.7 versicolor
+## 79           6.0         2.9          4.5         1.5 versicolor
+## 80           5.7         2.6          3.5         1.0 versicolor
+## 81           5.5         2.4          3.8         1.1 versicolor
+## 82           5.5         2.4          3.7         1.0 versicolor
+## 83           5.8         2.7          3.9         1.2 versicolor
+## 84           6.0         2.7          5.1         1.6 versicolor
+## 85           5.4         3.0          4.5         1.5 versicolor
+## 86           6.0         3.4          4.5         1.6 versicolor
+## 87           6.7         3.1          4.7         1.5 versicolor
+## 88           6.3         2.3          4.4         1.3 versicolor
+## 89           5.6         3.0          4.1         1.3 versicolor
+## 90           5.5         2.5          4.0         1.3 versicolor
+## 91           5.5         2.6          4.4         1.2 versicolor
+## 92           6.1         3.0          4.6         1.4 versicolor
+## 93           5.8         2.6          4.0         1.2 versicolor
+## 94           5.0         2.3          3.3         1.0 versicolor
+## 95           5.6         2.7          4.2         1.3 versicolor
+## 96           5.7         3.0          4.2         1.2 versicolor
+## 97           5.7         2.9          4.2         1.3 versicolor
+## 98           6.2         2.9          4.3         1.3 versicolor
+## 99           5.1         2.5          3.0         1.1 versicolor
+## 100          5.7         2.8          4.1         1.3 versicolor
+## 101          6.3         3.3          6.0         2.5  virginica
+## 102          5.8         2.7          5.1         1.9  virginica
+## 103          7.1         3.0          5.9         2.1  virginica
+## 104          6.3         2.9          5.6         1.8  virginica
+## 105          6.5         3.0          5.8         2.2  virginica
+## 106          7.6         3.0          6.6         2.1  virginica
+## 107          4.9         2.5          4.5         1.7  virginica
+## 108          7.3         2.9          6.3         1.8  virginica
+## 109          6.7         2.5          5.8         1.8  virginica
+## 110          7.2         3.6          6.1         2.5  virginica
+## 111          6.5         3.2          5.1         2.0  virginica
+## 112          6.4         2.7          5.3         1.9  virginica
+## 113          6.8         3.0          5.5         2.1  virginica
+## 114          5.7         2.5          5.0         2.0  virginica
+## 115          5.8         2.8          5.1         2.4  virginica
+## 116          6.4         3.2          5.3         2.3  virginica
+## 117          6.5         3.0          5.5         1.8  virginica
+## 118          7.7         3.8          6.7         2.2  virginica
+## 119          7.7         2.6          6.9         2.3  virginica
+## 120          6.0         2.2          5.0         1.5  virginica
+## 121          6.9         3.2          5.7         2.3  virginica
+## 122          5.6         2.8          4.9         2.0  virginica
+## 123          7.7         2.8          6.7         2.0  virginica
+## 124          6.3         2.7          4.9         1.8  virginica
+## 125          6.7         3.3          5.7         2.1  virginica
+## 126          7.2         3.2          6.0         1.8  virginica
+## 127          6.2         2.8          4.8         1.8  virginica
+## 128          6.1         3.0          4.9         1.8  virginica
+## 129          6.4         2.8          5.6         2.1  virginica
+## 130          7.2         3.0          5.8         1.6  virginica
+## 131          7.4         2.8          6.1         1.9  virginica
+## 132          7.9         3.8          6.4         2.0  virginica
+## 133          6.4         2.8          5.6         2.2  virginica
+## 134          6.3         2.8          5.1         1.5  virginica
+## 135          6.1         2.6          5.6         1.4  virginica
+## 136          7.7         3.0          6.1         2.3  virginica
+## 137          6.3         3.4          5.6         2.4  virginica
+## 138          6.4         3.1          5.5         1.8  virginica
+## 139          6.0         3.0          4.8         1.8  virginica
+## 140          6.9         3.1          5.4         2.1  virginica
+## 141          6.7         3.1          5.6         2.4  virginica
+## 142          6.9         3.1          5.1         2.3  virginica
+## 143          5.8         2.7          5.1         1.9  virginica
+## 144          6.8         3.2          5.9         2.3  virginica
+## 145          6.7         3.3          5.7         2.5  virginica
+## 146          6.7         3.0          5.2         2.3  virginica
+## 147          6.3         2.5          5.0         1.9  virginica
+## 148          6.5         3.0          5.2         2.0  virginica
+## 149          6.2         3.4          5.4         2.3  virginica
+## 150          5.9         3.0          5.1         1.8  virginica
+```
+
+
+
+---
+# Summarizing specific variables
+
+
+&lt;code class ='r hljs remark-code'&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;summar&lt;span style="background-color:#ffff7f"&gt;ize(&lt;/span&gt;&lt;span style="color:teal"&gt;mean&lt;/span&gt;_mass = &lt;span style="color:teal"&gt;mean&lt;/span&gt;(&lt;span style="color:cornflowerblue"&gt;body_mass_g&lt;/span&gt;))&lt;/code&gt;
+
+```
+
+## # A tibble: 1 x 1
+##   mean_mass
+##       &lt;dbl&gt;
+## 1     4207.
+
+```
+
+--
+
+* What are the **required** arguments of `summarize`?  
+
+* Are there any optional arguments?
+
+---
+
+# Many variables?  Many summary statistics?
+## No problemo
+
+
+&lt;code class ='r hljs remark-code'&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;summarize(&lt;span style="background-color:#ffff7f"&gt;across&lt;/span&gt;(c(&lt;span style="color:cornflowerblue"&gt;body_mass_g&lt;/span&gt;, &lt;span style="color:cornflowerblue"&gt;flipper_length_mm&lt;/span&gt;),&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;span style="color:darkred"&gt;list&lt;/span&gt;(&lt;span style="color:teal"&gt;mean&lt;/span&gt;, &lt;span style="color:teal"&gt;median&lt;/span&gt;)))&lt;/code&gt;
+
+```
+
+## # A tibble: 1 x 4
+##   body_mass_g_1 body_mass_g_2 flipper_length_mm_1 flipper_length_mm_2
+##           &lt;dbl&gt;         &lt;int&gt;               &lt;dbl&gt;               &lt;int&gt;
+## 1         4207.          4050                201.                 197
+
+```
+
+---
+# Making new variables
+
+Verb: `mutate()`
+
+The dataset gets *mutated* to include a new variable.
+
+
+&lt;code class ='r hljs remark-code'&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;&lt;span style="background-color:#ffff7f"&gt;mutate&lt;/span&gt;(&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;span style="color:teal"&gt;bill_size&lt;/span&gt; = bill_length_mm * bill_depth_mm&lt;br&gt;&amp;nbsp;&amp;nbsp;) %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;summary()&lt;/code&gt;
+
+```
+
+##       species          island    bill_length_mm  bill_depth_mm  
+##  Adelie   :146   Biscoe   :163   Min.   :32.10   Min.   :13.10  
+##  Chinstrap: 68   Dream    :123   1st Qu.:39.50   1st Qu.:15.60  
+##  Gentoo   :119   Torgersen: 47   Median :44.50   Median :17.30  
+##                                  Mean   :43.99   Mean   :17.16  
+##                                  3rd Qu.:48.60   3rd Qu.:18.70  
+##                                  Max.   :59.60   Max.   :21.50  
+##  flipper_length_mm  body_mass_g       sex           year        bill_size     
+##  Min.   :172       Min.   :2700   female:165   Min.   :2007   Min.   : 497.6  
+##  1st Qu.:190       1st Qu.:3550   male  :168   1st Qu.:2007   1st Qu.: 669.6  
+##  Median :197       Median :4050                Median :2008   Median : 731.6  
+##  Mean   :201       Mean   :4207                Mean   :2008   Mean   : 752.7  
+##  3rd Qu.:213       3rd Qu.:4775                3rd Qu.:2009   3rd Qu.: 808.5  
+##  Max.   :231       Max.   :6300                Max.   :2009   Max.   :1127.4
+
+```
+
+---
+
+Cool, let's look at our new variable!
+
+
+```r
+penguins %&gt;%
+  summarize(mean_bill = sd(bill_size))
+```
+
+```
+## Error: Problem with `summarise()` input `mean_bill`.
+## x object 'bill_size' not found
+## i Input `mean_bill` is `sd(bill_size)`.
+```
+
+--
+
+OH NO!
+
+**What happened here?**
+
+---
+
+class: center, middle
+
+# We calculated a new variable, but didn't reassign the data object
+
+---
+
+
+&lt;code class ='r hljs remark-code'&gt;&lt;span style="background-color:#ffff7f"&gt;penguins &lt;- &lt;/span&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;mutate(&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;bill_size = bill_length_mm * bill_depth_mm&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;)&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;br&gt;penguins %&gt;%&lt;br&gt;&amp;nbsp;&amp;nbsp;summarize(mean_bill = sd(bill_size))&lt;/code&gt;
+
+```
+
+## # A tibble: 1 x 1
+##   mean_bill
+##       &lt;dbl&gt;
+## 1      116.
+
+```
+
+---
+# Ordering
+
+Verb: `arrange()`
+
+We **arrange** the dataset in order of a particular variable.
+
+
+```r
+penguins %&gt;% 
+  arrange(body_mass_g)
+```
+
+```
+## # A tibble: 333 x 9
+##    species   island    bill_length_mm bill_depth_mm flipper_length_~ body_mass_g
+##    &lt;fct&gt;     &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt;
+##  1 Chinstrap Dream               46.9          16.6              192        2700
+##  2 Adelie    Biscoe              36.5          16.6              181        2850
+##  3 Adelie    Biscoe              36.4          17.1              184        2850
+##  4 Adelie    Biscoe              34.5          18.1              187        2900
+##  5 Adelie    Dream               33.1          16.1              178        2900
+##  6 Adelie    Torgersen           38.6          17                188        2900
+##  7 Chinstrap Dream               43.2          16.6              187        2900
+##  8 Adelie    Biscoe              37.9          18.6              193        2925
+##  9 Adelie    Dream               37            16.9              185        3000
+## 10 Adelie    Dream               37.3          16.8              192        3000
+## # ... with 323 more rows, and 3 more variables: sex &lt;fct&gt;, year &lt;int&gt;,
+## #   bill_size &lt;dbl&gt;
+```
+
+---
+
+## Related: `top_n`
+
+
+```r
+penguins %&gt;%
+  top_n(3, body_mass_g)
+```
+
+```
+## # A tibble: 4 x 9
+##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g sex  
+##   &lt;fct&gt;   &lt;fct&gt;           &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt; &lt;fct&gt;
+## 1 Gentoo  Biscoe           49.2          15.2              221        6300 male 
+## 2 Gentoo  Biscoe           59.6          17                230        6050 male 
+## 3 Gentoo  Biscoe           51.1          16.3              220        6000 male 
+## 4 Gentoo  Biscoe           48.8          16.2              222        6000 male 
+## # ... with 2 more variables: year &lt;int&gt;, bill_size &lt;dbl&gt;
+```
+
+---
+
+# Quick check in!
+
+Remember,
+
+
+```r
+penguins %&gt;%
+  top_n(3, body_mass_g)
+```
+
+is the same as
+
+
+```r
+top_n(penguins, 3, body_mass_g)
+```
+
+or
+
+
+```r
+top_n(x = penguins, n = 3, wt = body_mass_g)
+```
+
+---
+
+# Selecting
+
+Verb: `select()`
+
+We **select** which variables we would like to remain in the dataset.
+
+
+```r
+penguins %&gt;%
+  select(species, body_mass_g) %&gt;%
+  arrange(body_mass_g)
+```
+
+```
+## # A tibble: 333 x 2
+##    species   body_mass_g
+##    &lt;fct&gt;           &lt;int&gt;
+##  1 Chinstrap        2700
+##  2 Adelie           2850
+##  3 Adelie           2850
+##  4 Adelie           2900
+##  5 Adelie           2900
+##  6 Adelie           2900
+##  7 Chinstrap        2900
+##  8 Adelie           2925
+##  9 Adelie           3000
+## 10 Adelie           3000
+## # ... with 323 more rows
+```
+
+---
+
+# Filtering
+
+Verb: `filter()`
+
+We **filter** to the rows (observations) we would like to keep in the dataset.
+
+
+```r
+penguins_new %&gt;%
+  select(species, body_mass_g) %&gt;%
+  filter(species == "Adelie") %&gt;%
+  arrange(body_mass_g)
+```
+
+---
+class:center,middle,inverse
+
+# Grouping and summarizing
+
+---
+# `group_by`
+
+* We have learned how to use the `summarize` functions to get information.
+
+* What if you want to summarize your data within categories?
+
+
+```r
+penguins %&gt;%
+  group_by(species) %&gt;%
+  summarize(mean(body_mass_g))
+```
+
+```
+## # A tibble: 3 x 2
+##   species   `mean(body_mass_g)`
+##   &lt;fct&gt;                   &lt;dbl&gt;
+## 1 Adelie                  3706.
+## 2 Chinstrap               3733.
+## 3 Gentoo                  5092.
+```
+---
+# Warning!
+
+## You should **always** have a `summarize` after a `group_by`!!!
+
+(There are other ways to use it, but wait until you are very familiar with `dplyr` to try that.)
+
+---
+
+## Try it together on the `iris` dataset
+
+* What is the average Petal Length for the versicolor irises?
+
+* What is the greatest sepal Length for each of the three species of iris in this dataset?
+
+* If we define Petal Area as Petal Length times Petal Width, then what are the top three Petal Areas for each species?
+
+* Try to do each of these in a single chain of pipes!
+
+---
+
+class: center, middle
+
+# Tidy Data for Joining and Pivoting Data
+
+---
+## Tidy Data Principles
+
+1. Every **variable** is a **column**.
+
+--
+
+2. Every **observation** (or **sample**) is a **row**.
+
+--
+
+3. Every **value** is in a **cell**
+
+---
+class: center, middle
+
+![](tidy_data.png)
+
+---
+## Tidy Data
+
+Questions to Ponder:
+
+--
+
+What are the **observational units** in the dataset?
+
+--
+
+* In a database of customer demographic info, perhaps it is the *customers*
+
+--
+
+* In a database of transactions, perhaps it is *unique transaction*, i.e, unique combos of *customer* and *date*
+
+--
+
+What are the **variables** we want to study?
+
+--
+
+* Should we have one *numeric* column called `Customer Balance 2020` and one *numeric* column called `Customer Balance 2021`?
+
+--
+
+* Or should we have one *numeric* column called `Customer Balance` and one *categorical* column called `Date`?
+
+---
+## Example
+
+Consider the following dataset containing health information of cereals:
+
+
+```
+## # A tibble: 6 x 16
+##   name       mfr   type  calories protein   fat sodium fiber carbo sugars potass
+##   &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1 100% Bran  N     C           70       4     1    130  10     5        6    280
+## 2 100% Natu~ Q     C          120       3     5     15   2     8        8    135
+## 3 All-Bran   K     C           70       4     1    260   9     7        5    320
+## 4 All-Bran ~ K     C           50       4     0    140  14     8        0    330
+## 5 Almond De~ R     C          110       2     2    200   1    14        8     NA
+## 6 Apple Cin~ G     C          110       2     2    180   1.5  10.5     10     70
+## # ... with 5 more variables: vitamins &lt;dbl&gt;, shelf &lt;dbl&gt;, weight &lt;dbl&gt;,
+## #   cups &lt;dbl&gt;, rating &lt;dbl&gt;
+```
+
+
+---
+
+## Example
+
+Consider the research question:  *How do the sugar and protein contents compare across cereal manufacturers?*
+
+--
+
+
+```r
+cereals %&gt;%
+  ggplot(aes(x = sugars, y = protein, color = mfr)) +
+  geom_point()
+```
+
+---
+
+
+![](03-Data_Wrangling_files/figure-html/unnamed-chunk-29-1.png)&lt;!-- --&gt;
+
+---
+## Example
+
+
+
+```r
+avg_by_mfr &lt;- cereals %&gt;%
+  group_by(mfr) %&gt;%
+  summarize(
+    mean_sugars = mean(sugars),
+    mean_protein = mean(protein)
+  )
+
+avg_by_mfr
+```
+
+```
+## # A tibble: 7 x 3
+##   mfr   mean_sugars mean_protein
+##   &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;
+## 1 A            3            4   
+## 2 G            7.95         2.32
+## 3 K            7.57         2.65
+## 4 N            1.83         2.83
+## 5 P            8.78         2.44
+## 6 Q           NA            2.62
+## 7 R            6.12         2.5
+```
+
+---
+
+
+.pull-left[
+
+```r
+avg_by_mfr %&gt;%
+  ggplot(aes(x = mfr, y = mean_sugars)) +
+  geom_col()
+```
+
+![](03-Data_Wrangling_files/figure-html/unnamed-chunk-31-1.png)&lt;!-- --&gt;
+]
+
+.pull-left[
+
+```r
+avg_by_mfr %&gt;%
+  ggplot(aes(x = mfr, y = mean_protein)) +
+  geom_col()
+```
+
+![](03-Data_Wrangling_files/figure-html/unnamed-chunk-32-1.png)&lt;!-- --&gt;
+]
+
+---
+## Example
+
+Why are we stuck?
+
+--
+
+Let's return to the **research question**:  How do the nutrient levels (sugar/protein) vary across manufacturers?
+
+--
+
+This question involves **three variables**:
+
+* `manufacturer` - categorical
+
+* `nutrient level`, how many grams of the nutrient in question are present - quantitative
+
+* `nutrient type`, which nutrient we measured - categorical
+
+--
+
+Our data is not **tidy** with respect to this question!
+
+---
+
+class: center, middle, inverse
+
+# Pivoting Longer
+
+---
+## Pivoting Longer
+
+Right now, our cereal data is **wide**: each nutrient is its own column
+
+
+```
+## # A tibble: 6 x 16
+##   name       mfr   type  calories protein   fat sodium fiber carbo sugars potass
+##   &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1 100% Bran  N     C           70       4     1    130  10     5        6    280
+## 2 100% Natu~ Q     C          120       3     5     15   2     8        8    135
+## 3 All-Bran   K     C           70       4     1    260   9     7        5    320
+## 4 All-Bran ~ K     C           50       4     0    140  14     8        0    330
+## 5 Almond De~ R     C          110       2     2    200   1    14        8     NA
+## 6 Apple Cin~ G     C          110       2     2    180   1.5  10.5     10     70
+## # ... with 5 more variables: vitamins &lt;dbl&gt;, shelf &lt;dbl&gt;, weight &lt;dbl&gt;,
+## #   cups &lt;dbl&gt;, rating &lt;dbl&gt;
+```
+
+
+---
+## Pivoting
+
+Our goal is to make it **long**: One column for all values, one column for nutrient type labels.
+
+--
+
+`pivot_longer()` function need to know:
+
+* Which columns are involved in the pivoting
+
+* What you will name the new **values** variable
+
+* What you will name the new **labels** variable
+
+---
+
+## Pivoting
+
+
+```r
+cereals_longer &lt;- cereals %&gt;%
+  select(name, mfr, protein, sugars) %&gt;%
+  pivot_longer(protein:sugars,
+               names_to = "Nutrient",
+               values_to = "Amount")
+
+cereals_longer
+```
+
+```
+## # A tibble: 154 x 4
+##    name                      mfr   Nutrient Amount
+##    &lt;chr&gt;                     &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;
+##  1 100% Bran                 N     protein       4
+##  2 100% Bran                 N     sugars        6
+##  3 100% Natural Bran         Q     protein       3
+##  4 100% Natural Bran         Q     sugars        8
+##  5 All-Bran                  K     protein       4
+##  6 All-Bran                  K     sugars        5
+##  7 All-Bran with Extra Fiber K     protein       4
+##  8 All-Bran with Extra Fiber K     sugars        0
+##  9 Almond Delight            R     protein       2
+## 10 Almond Delight            R     sugars        8
+## # ... with 144 more rows
+```
+
+---
+
+
+```r
+cereals_longer %&gt;%
+  ggplot(aes(x = mfr, y = Amount, fill = Nutrient)) +
+  geom_boxplot()
+```
+
+---
+
+![](03-Data_Wrangling_files/figure-html/unnamed-chunk-36-1.png)&lt;!-- --&gt;
+
+---
+
+
+```r
+cereals_longer %&gt;%
+  group_by(mfr, Nutrient) %&gt;%
+  summarize(
+    avg_amount = mean(Amount)
+  ) %&gt;%
+  ggplot(aes(x = mfr, y = avg_amount, fill = Nutrient)) +
+  geom_col(position = "dodge")
+```
+
+---
+
+![](03-Data_Wrangling_files/figure-html/unnamed-chunk-38-1.png)&lt;!-- --&gt;
+
+
+---
+
+class: center, middle, inverse
+
+# Pivoting Wider
+
+---
+## Example
+
+Let's now return to the `penguins` dataset:
+
+
+```r
+head(penguins)
+```
+
+```
+## # A tibble: 6 x 9
+##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g sex  
+##   &lt;fct&gt;   &lt;fct&gt;           &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt; &lt;fct&gt;
+## 1 Adelie  Torge~           39.1          18.7              181        3750 male 
+## 2 Adelie  Torge~           39.5          17.4              186        3800 fema~
+## 3 Adelie  Torge~           40.3          18                195        3250 fema~
+## 4 Adelie  Torge~           36.7          19.3              193        3450 fema~
+## 5 Adelie  Torge~           39.3          20.6              190        3650 male 
+## 6 Adelie  Torge~           38.9          17.8              181        3625 fema~
+## # ... with 2 more variables: year &lt;int&gt;, bill_size &lt;dbl&gt;
+```
+
+---
+## Example
+
+Suppose we want to ask the question,
+
+&gt; How much do female and male bill lengths differ, on average, by species?
+
+--
+
+
+```r
+avg_bills &lt;- penguins %&gt;%
+  group_by(species, sex) %&gt;%
+  summarize(
+    avg_bill = mean(bill_length_mm)
+  ) 
+
+avg_bills
+```
+
+```
+## # A tibble: 6 x 3
+## # Groups:   species [3]
+##   species   sex    avg_bill
+##   &lt;fct&gt;     &lt;fct&gt;     &lt;dbl&gt;
+## 1 Adelie    female     37.3
+## 2 Adelie    male       40.4
+## 3 Chinstrap female     46.6
+## 4 Chinstrap male       51.1
+## 5 Gentoo    female     45.6
+## 6 Gentoo    male       49.5
+```
+
+---
+## Example
+
+
+```r
+avg_bills %&gt;%
+  group_by(species) %&gt;%
+  mutate(
+    ??????? - ?????
+  )
+```
+
+---
+## Example
+
+What went wrong?
+
+--
+
+We wanted to subtract the variable `avg_bill_female` from the variable `avg_bill_male`.
+
+--
+
+But these are not variables!!!
+
+--
+
+Our data is not **tidy** with respect to our research question.
+
+---
+## Example
+
+
+```r
+avg_bills_wider &lt;- avg_bills %&gt;%
+  pivot_wider(names_from = sex,
+              values_from = avg_bill)
+
+avg_bills_wider
+```
+
+```
+## # A tibble: 3 x 3
+## # Groups:   species [3]
+##   species   female  male
+##   &lt;fct&gt;      &lt;dbl&gt; &lt;dbl&gt;
+## 1 Adelie      37.3  40.4
+## 2 Chinstrap   46.6  51.1
+## 3 Gentoo      45.6  49.5
+```
+
+---
+## Example
+
+
+```r
+avg_bills_wider &lt;- avg_bills %&gt;%
+  pivot_wider(names_from = sex,
+              values_from = avg_bill,
+              names_prefix = "avg_bill_")
+
+avg_bills_wider
+```
+
+```
+## # A tibble: 3 x 3
+## # Groups:   species [3]
+##   species   avg_bill_female avg_bill_male
+##   &lt;fct&gt;               &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Adelie               37.3          40.4
+## 2 Chinstrap            46.6          51.1
+## 3 Gentoo               45.6          49.5
+```
+
+---
+## Example
+
+
+```r
+avg_bills_wider %&gt;%
+  mutate(
+    bill_diff  = avg_bill_male - avg_bill_female
+  ) %&gt;%
+  arrange(bill_diff)
+```
+
+```
+## # A tibble: 3 x 4
+## # Groups:   species [3]
+##   species   avg_bill_female avg_bill_male bill_diff
+##   &lt;fct&gt;               &lt;dbl&gt;         &lt;dbl&gt;     &lt;dbl&gt;
+## 1 Adelie               37.3          40.4      3.13
+## 2 Gentoo               45.6          49.5      3.91
+## 3 Chinstrap            46.6          51.1      4.52
+```
+
+---
+class: center, middle
+
+![](https://www.fromthebottomoftheheap.net/assets/img/posts/original-dfs-tidy.png)
+
+---
+class: center, middle
+
+![](https://www.fromthebottomoftheheap.net/assets/img/posts/tidyr-longer-wider.gif)
+---
+
+class: center, middle, inverse
+
+## Joining Datasets
+
+---
+
+
+
+## Left Join (and Right Join)
+
+A **left join** prioritizes the **first** dataset.
+
+--
+
+We use it when we are trying to add information from Dataset B into Dataset A,
+without changing the structure of Dataset A.
+
+--
+
+`left_join()` in `dplyr`
+
+--
+
+A **right join** is the same thing, but prioritizing the **second** dataset.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/left-join.gif)
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/left-join-extra.gif)
+
+---
+
+## Full Join
+
+A **full join** retains **all information** in **either dataset**.
+
+--
+
+`full_join()` in `dplyr`
+
+--
+
+It is used when you have data from two sources, and you want to combine them into one dataset.
+
+--
+
+Note:  Missing information becomes "NA"!
+
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/full-join.gif)
+
+---
+
+## Inner Join
+
+An **inner join** retains only information for the observations that appear in **both datasets**.
+
+--
+
+`inner_join()` in `dplyr`
+
+--
+
+Careful!  If your subject isn't in **both** Dataset A and Dataset B, the info will be lost!
+
+--
+
+This is used to create a dataset with *no missing information*
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/inner-join.gif)
+
+---
+
+## Semi Join
+
+An **semi join** is the same as an inner join, but it does not keep the variables from the second dataset.
+
+--
+
+`semi_join()` in `dplyr`
+
+--
+
+Dataset B is being used to reduce Dataset A, but none of its other information is retained.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/semi-join.gif)
+
+---
+
+## Anti Join
+
+An **anti join** retains only information that appears in **one, but not both** of the datasets.
+
+--
+
+`anti_join()` in `dplyr`
+
+--
+
+It is rarely practical as a data creation.
+
+--
+
+Instead, we use it as a shortcut to answer questions about which observations are not in both datasets.
+
+---
+
+![](https://www.garrickadenbuie.com/project/tidyexplain/images/anti-join.gif)
+
+---
+
+class: center, middle, inverse
+# Data Types and Base R Syntax
+
+---
+# Data Types
+
+Does your data consist of...
+
+--
+
+* numbers?
+    + integers?
+    + doubles?
+    
+--
+
+* words?
+    + characters/string?
+    + factor?
+    
+--
+
+* `TRUE` or `FALSE` values (*boolean*)?
+
+--
+
+* something else???
+    + Dates and times?
+    + Images?
+    
+
+---
+# Data Types: Numeric
+
+
+```r
+a &lt;- 5.5
+
+class(a)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+typeof(a)
+```
+
+```
+## [1] "double"
+```
+
+```r
+str(a)
+```
+
+```
+##  num 5.5
+```
+
+---
+# Data Types: Numeric
+  
+
+```r
+is.numeric(a)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+is.double(a)
+```
+
+```
+## [1] TRUE
+```
+
+---
+# Data Types: Numeric
+
+*What do you think will happen?*
+
+
+```r
+a &lt;- 5
+
+is.integer(a)
+```
+
+--
+
+
+```
+## [1] FALSE
+```
+
+---
+
+# Data Types: Numeric
+
+Integers are special:
+
+
+
+&lt;code class ='r hljs remark-code'&gt;a &lt;- 5&lt;span style="background-color:#ffff7f"&gt;L&lt;/span&gt;&lt;/code&gt;
+
+
+```r
+is.integer(a)
+```
+
+```
+## [1] TRUE
+```
+
+```r
+typeof(a)
+```
+
+```
+## [1] "integer"
+```
+
+
+--
+
+It is rarely important to make the distinction between integers and doubles.
+
+---
+# Data Types: Boolean
+
+For Boolean data , you should think of the data as having values `0` (`FALSE`) or `1` (`TRUE`).
+
+
+```r
+is_5 &lt;- a == 5
+
+is_5
+```
+
+```
+## [1] TRUE
+```
+
+```r
+class(is_5)
+```
+
+```
+## [1] "logical"
+```
+
+```r
+as.integer(is_5)
+```
+
+```
+## [1] 1
+```
+
+```r
+is_5 + 1
+```
+
+```
+## [1] 2
+```
+
+
+
+---
+# Data Types: Character
+
+
+```r
+my_word &lt;- "Hunter"
+
+class(my_word)
+```
+
+```
+## [1] "character"
+```
+
+--
+
+
+```r
+my_sentence &lt;- "Hi, I'm Hunter!"
+
+class(my_sentence)
+```
+
+```
+## [1] "character"
+```
+--
+Another word for a **character** type object is a **string**.
+
+
+---
+# Data Types: Factors
+
+
+
+
+
+```r
+head(penguins)
+```
+
+```
+## # A tibble: 6 x 9
+##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g sex  
+##   &lt;fct&gt;   &lt;fct&gt;           &lt;dbl&gt;         &lt;dbl&gt;            &lt;int&gt;       &lt;int&gt; &lt;fct&gt;
+## 1 Adelie  Torge~           39.1          18.7              181        3750 male 
+## 2 Adelie  Torge~           39.5          17.4              186        3800 fema~
+## 3 Adelie  Torge~           40.3          18                195        3250 fema~
+## 4 Adelie  Torge~           36.7          19.3              193        3450 fema~
+## 5 Adelie  Torge~           39.3          20.6              190        3650 male 
+## 6 Adelie  Torge~           38.9          17.8              181        3625 fema~
+## # ... with 2 more variables: year &lt;int&gt;, bill_size &lt;dbl&gt;
+```
+
+
+---
+# Data Types: Factors
+
+Not just *any* string, but specifically defined **categories**.
+
+
+```r
+class(penguins$species)
+```
+
+```
+## [1] "factor"
+```
+
+```r
+levels(penguins$species)
+```
+
+```
+## [1] "Adelie"    "Chinstrap" "Gentoo"
+```
+
+```r
+str(penguins$species)
+```
+
+```
+##  Factor w/ 3 levels "Adelie","Chinstrap",..: 1 1 1 1 1 1 1 1 1 1 ...
+```
+
+
+---
+# Data Types: Factors
+
+Warning:  Factors are *weird*
+
+
+```r
+as.character(penguins$species)
+```
+
+```
+##   [1] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##   [7] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [13] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [19] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [25] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [31] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [37] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [43] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [49] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [55] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [61] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [67] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [73] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [79] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [85] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [91] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+##  [97] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [103] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [109] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [115] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [121] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [127] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [133] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [139] "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"    "Adelie"   
+## [145] "Adelie"    "Adelie"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [151] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [157] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [163] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [169] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [175] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [181] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [187] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [193] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [199] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [205] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [211] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [217] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [223] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [229] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [235] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [241] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [247] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [253] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [259] "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"    "Gentoo"   
+## [265] "Gentoo"    "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [271] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [277] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [283] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [289] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [295] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [301] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [307] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [313] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [319] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [325] "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap" "Chinstrap"
+## [331] "Chinstrap" "Chinstrap" "Chinstrap"
+```
+---
+# Data Types: Factors
+
+Warning:  Factors are *weird*
+
+
+```r
+as.integer(penguins$species)
+```
+
+```
+##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [38] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [75] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+## [112] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3
+## [149] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+## [186] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+## [223] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+## [260] 3 3 3 3 3 3 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+## [297] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+```
+
+---
+class: center, middle
+# Object Structures
+
+---
+
+# Object Structures
+
+Is your object a...
+
+* function?
+
+* vector?
+
+* list?
+
+* data frame?
+
+* matrix?
+
+---
+# Vectors
+
+A **vector** is a set of values that are all the same **type**
+
+
+```r
+my_vec &lt;- c("a", "b", "c")
+
+str(my_vec)
+```
+
+```
+##  chr [1:3] "a" "b" "c"
+```
+
+```r
+my_vec &lt;- c(1, 3, 5)
+
+str(my_vec)
+```
+
+```
+##  num [1:3] 1 3 5
+```
+
+```r
+my_vec &lt;- c(1, "a")
+
+str(my_vec)
+```
+
+```
+##  chr [1:2] "1" "a"
+```
+
+---
+# Vectors
+
+A vector with only one **element** is called an **atomic vector**.
+
+
+```r
+my_vec &lt;- 1
+
+str(my_vec)
+```
+
+```
+##  num 1
+```
+
+```r
+my_vec[1]
+```
+
+```
+## [1] 1
+```
+
+---
+
+# Matrices
+
+A **matrix** is a **two-dimensional** set of values that are all the same type.
+
+
+
+
+```r
+my_mat &lt;- matrix(c("a", "b", "c", "d"), nrow = 2, ncol = 2)
+
+str(my_mat)
+```
+
+```
+##  chr [1:2, 1:2] "a" "b" "c" "d"
+```
+
+--
+Note: If turning  vector into a matrix, be careful with rows and columns!
+
+
+```r
+my_mat
+```
+
+```
+##      [,1] [,2]
+## [1,] "a"  "c" 
+## [2,] "b"  "d"
+```
+
+
+---
+# Lists
+
+A **list** is the the **most general** object.  Any structure and any data type can be stored in a list!
+
+
+```r
+my_list &lt;- list(
+  a = "Well hi there",
+  b = 1:10,
+  c = my_mat
+)
+
+my_list
+```
+
+```
+## $a
+## [1] "Well hi there"
+## 
+## $b
+##  [1]  1  2  3  4  5  6  7  8  9 10
+## 
+## $c
+##      [,1] [,2]
+## [1,] "a"  "c" 
+## [2,] "b"  "d"
+```
+
+---
+# Lists
+
+
+```r
+str(my_list)
+```
+
+```
+## List of 3
+##  $ a: chr "Well hi there"
+##  $ b: int [1:10] 1 2 3 4 5 6 7 8 9 10
+##  $ c: chr [1:2, 1:2] "a" "b" "c" "d"
+```
+
+```r
+my_list$a
+```
+
+```
+## [1] "Well hi there"
+```
+
+---
+# Lists: brackets
+
+What is the difference between the following two ways of accessing information in a list?
+
+
+```r
+my_list[[2]]
+```
+
+```
+##  [1]  1  2  3  4  5  6  7  8  9 10
+```
+
+```r
+my_list[2]
+```
+
+```
+## $b
+##  [1]  1  2  3  4  5  6  7  8  9 10
+```
+
+---
+# Lists: brackets
+
+What is the difference between the following two ways of accessing information in a list?
+
+
+```r
+str(my_list[[2]])
+```
+
+```
+##  int [1:10] 1 2 3 4 5 6 7 8 9 10
+```
+
+--
+
+
+```r
+str(my_list[2])
+```
+
+```
+## List of 1
+##  $ b: int [1:10] 1 2 3 4 5 6 7 8 9 10
+```
+
+---
+class: center, middle
+
+# Troubleshooting Errors
+
+---
+
+# Syntax Errors
+
+* Did you leave off a parenthesis?
+
+
+&lt;code class ='r hljs remark-code'&gt;rnorm&lt;span style="background-color:#ffff7f"&gt;(&lt;/span&gt;10, mean = 5&lt;/code&gt;
+
+
+```
+## Error: &lt;text&gt;:4:0: unexpected end of input
+## 2: rnorm(10, mean = 5
+## 3: 
+##   ^
+```
+
+
+---
+
+# Syntax Errors
+
+* Did you leave off a comma?
+
+
+&lt;code class ='r hljs remark-code'&gt;rnorm(10&lt;span style="background-color:#ffff7f"&gt; mean&lt;/span&gt; = 5)&lt;/code&gt;
+
+
+```
+## Error: &lt;text&gt;:2:10: unexpected symbol
+## 1: 
+## 2: rnorm(10 mean
+##             ^
+```
+
+
+---
+
+# Syntax Errors
+
+* Did you make a typo?
+
+
+
+&lt;code class ='r hljs remark-code'&gt;&lt;span style="background-color:#ffff7f"&gt;rnrom&lt;/span&gt;(10, mean = 5)&lt;/code&gt;
+
+
+```
+## Error in rnrom(10, mean = 5): could not find function "rnrom"
+```
+
+---
+# Object type errors
+
+* Are you using the right **input** that the function expects?
+
+
+&lt;code class ='r hljs remark-code'&gt;rnorm(&lt;span style="background-color:#ffff7f"&gt;'hi'&lt;/span&gt;, mean = 5)&lt;/code&gt;
+
+
+```
+## Warning in rnorm("hi", mean = 5): NAs introduced by coercion
+```
+
+```
+## Error in rnorm("hi", mean = 5): invalid arguments
+```
+
+---
+# Object type errors
+
+* Are you expecting the right **output** of the function?
+
+
+```
+## Error in my_obj(5): could not find function "my_obj"
+```
+
+
+&lt;code class ='r hljs remark-code'&gt;my_obj &lt;- rnorm(10, mean = 5)&lt;br&gt;&lt;br&gt;&lt;span style="background-color:#ffff7f"&gt;my_obj(5)&lt;/span&gt;&lt;/code&gt;
+
+```
+
+## Error in my_obj(5): could not find function "my_obj"
+
+```
+
+---
+class: center, middle
+
+# Errors, warnings, and messages
+
+---
+# Messages
+
+Just because you see scary red text, this does **not** mean something went wrong!  
+
+This is just **R** communicating with you.
+
+--
+
+For example, you often see a lot of messages after:
+
+
+```r
+library(tidyverse)
+```
+
+---
+# Warnings
+
+Often, **R** will give you a **warning**.
+
+--
+
+This means that your code *did* run...
+
+--
+
+...but you probably want to make sure it succeeded.
+
+---
+# Warnings
+
+
+
+```r
+my_vec &lt;- c("a", "b", "c")
+
+my_new_vec &lt;- as.integer(my_vec)
+```
+
+```
+## Warning: NAs introduced by coercion
+```
+
+--
+
+
+```r
+my_new_vec
+```
+
+```
+## [1] NA NA NA
+```
+
+---
+# Errors
+
+If the word **Error** appears in your message from **R**, then you have a problem.
+
+--
+
+This means your code **could not run**!
+
+--
+
+
+```r
+my_vec &lt;- c("a", "b", "c")
+
+my_new_vec &lt;- my_vec + 1
+```
+
+```
+## Error in my_vec + 1: non-numeric argument to binary operator
+```
+---
+class: center, middle
+
+## Parlez-vous ERROR?
+
+Error messages can be confusing!
+
+---
+# Translations
+
+**R** says...
+
+&gt; Error: Object 'some_obj' not found.
+
+It *probably* means...
+
+&gt; You haven't run the code to create 'some_obj'  OR you have a typo in the name!
+
+--
+
+
+```r
+some_ojb &lt;- 1:10
+
+mean(some_obj)
+```
+
+```
+## Error in mean(some_obj): object 'some_obj' not found
+```
+
+---
+# Translations
+
+**R** says...
+
+&gt; Error: Object of type 'closure' is not subsettable.
+
+It *probably* means...
+
+&gt; Oops, you tried to use square brackets on a function
+
+--
+
+
+```r
+mean[1,2]
+```
+
+```
+## Error in mean[1, 2]: object of type 'closure' is not subsettable
+```
+
+---
+# Translations
+
+**R** says...
+
+&gt; Error: Non-numeric argument to binary operator
+
+It *probably* means...
+
+&gt; You tried to do math on data that isn't numeric.
+
+--
+
+
+```r
+"a" + 2
+```
+
+```
+## Error in "a" + 2: non-numeric argument to binary operator
+```
+
+---
+# Okay, now what?
+
+When all else fails, **Google** your error message.
+
+--
+
+* Leave out the specifics.
+
+--
+
+* Include the function you are using.
+
+
+---
+# Try it...
+
+*What's wrong here?*
+
+
+```r
+matrix(c("a", "b", "c", "d"), num_row = 2)
+```
+
+```
+## Error in matrix(c("a", "b", "c", "d"), num_row = 2): unused argument (num_row = 2)
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightLines": true,
+"highlightStyle": "github",
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

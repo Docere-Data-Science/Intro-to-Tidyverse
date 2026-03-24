@@ -1,0 +1,220 @@
+---
+title: "SQL and R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setting up the connection
+
+#### Setup
+
+Our first step is to prepare RStudio to set up a connection to a mySQL database.  
+
+For this, we will need two things:
+
+1. Download a `SQLIte` database to your machine, so we can practice with it:
+https://cdn.sqlitetutorial.net/wp-content/uploads/2018/03/chinook.zip
+
+2. Install some SQL-related R packages:
+
+```{r}
+#install.packages(c("RSQLite", "DBI", "dbplyr", "obdc"))
+```
+
+Next we'll load libraries (of course):
+
+```{r}
+library(RSQLite)
+library(DBI)
+library(odbc)
+library(dbplyr)
+library(tidyverse)
+```
+Last we'll verify that the connections are working properly
+
+```{r}
+sort(unique(odbcListDrivers()[[1]]))
+```
+
+
+#### Connect to database
+
+Now we set up the connection:
+
+```{r}
+### You may need to replace "chinook.db" with the full path to this file on your machine.
+con <- dbConnect(SQLite(), "chinook.db")
+```
+
+
+## Getting a Dataset
+
+Normally, you'd explore the data by looking at the object with `summary()` or
+similar.  However, our object `con` isn't a **Data Frame**, but instead, an
+object of type *SQLiteConnection*.
+
+```{r}
+con
+summary(con)
+```
+
+Let's find out what datasets are in this database:
+
+```{r}
+src_dbi(con)
+```
+
+
+To look a particular dataset in the database, we can use the `tbl()` function from `dbplyr`.
+
+```{r}
+tbl(con, "customers")
+```
+
+Let's save this table as an object in R:
+
+```{r}
+cust <- tbl(con, "customers")
+
+cust
+```
+
+Notice that although `emp` appears to be a data frame, it is actually just a
+"pointer" to where the `employees` dataset lives in the database, as well as
+some information about its row and column names.
+
+```{r}
+str(cust)
+```
+
+We'll never be able to use our familiar "shortcut" functions, like `summary()`,
+because these operate on the full dataset.  We are trying to avoid pulling the
+full dataset into R, presumably because it is too large.
+
+```{r}
+summary(cust)
+```
+
+
+## Data Manipulation
+
+Fortunately, the `dbplyr` packages implements most of the main `dplyr` operations.
+
+Instead of running these operations in R, `dbplyr` "translates" them into SQL
+code, and then sends that to the database.
+
+For example,
+
+```{r}
+cust %>%
+  select(LastName, FirstName, CustomerId) %>%
+  filter(CustomerId %% 2 == 0) %>%
+  show_query()
+```
+
+Once again, this is **never** returning the full data frame to R:
+
+```{r}
+cust %>%
+  select(LastName, FirstName) %>%
+  nrow()
+```
+
+It is simply translating R to SQL:
+
+```{r}
+cust %>%
+  select(LastName, FirstName) %>%
+  show_query()
+```
+
+
+The advantage is that we can do simple operations on very large data using SQL
+**much** faster than in R.  (In fact, many datasets would be impossible even
+to read into R.)
+
+Other than that "hidden" advantage, your dplyr code looks the same as it normally would:
+
+```{r}
+cust %>%
+  count(Country)
+  
+```
+
+```{r}
+cust %>%
+  group_by(country) %>%
+  summarize(n())
+```
+
+## Other Operations
+
+#### Collecting
+
+There may be times that you do want to pull a portion of the dataset into R.
+You can do this with `collect()`
+
+Be careful, though!  Make sure what you are loading in is of reasonable size!
+
+```{r}
+cust_bra <- cust %>%
+  filter(country == "Brazil") %>%
+  collect()
+
+cust_bra
+```
+
+Here the `filter` step is done in SQL, but then `cust_bra` becomes simply a
+data frame in R.
+
+Any further operations you do happen in R, not SQL:
+
+```{r}
+cust_bra %>%
+  select(FirstName)
+```
+
+```{r, error = TRUE}
+cust_bra %>%
+  select(FirstName) %>%
+  show_query()
+```
+
+#### Writing to Databases
+
+You can also use your connection to add to a database:
+
+```{r}
+dbWriteTable(con, "brazilian_customers", cust_bra)
+```
+
+```{r}
+src_dbi(con)
+```
+
+#### Statistics
+
+The tradeoff of SQL's speed is its flexibility.  Many fancy statistical methods
+aren't implemented in SQL/dbplyr.
+
+However, a lot can be done!
+
+```{r}
+emp %>%
+  lm(SupportRepId ~ Country, data = .)
+```
+
+## Connecting to a real database
+
+```{r}
+con <- dbConnect(RMySQL::MySQL(), 
+                 user='kbodwin', 
+                 password='somepassword', 
+                 dbname='vineyard_diversity',
+                 host='vineyard-project.cnmgssyjqpsv.us-west-1.rds.amazonaws.com',
+                 port=3306)
+```
+

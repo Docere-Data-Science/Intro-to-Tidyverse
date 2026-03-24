@@ -1,0 +1,84 @@
+---
+title: "Data Read and Explore"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# libraries
+```
+
+
+## Read the data
+
+```{r}
+hiphop <- read.csv("https://www.dropbox.com/s/1qqyshx5ikt9zoc/hiphop.csv?dl=1")
+```
+
+## General summaries
+
+```{r}
+str(hiphop)
+```
+
+```{r}
+summary(hiphop)
+```
+
+```{r}
+# from {dplyr} package
+glimpse(hiphop)
+```
+
+```{r}
+# from {skimr} package
+skim(hiphop)
+```
+
+## Exploring individual variables
+
+```{r}
+hiphop %>%
+  count(sex)
+```
+
+```{r}
+hiphop %>%
+  count(subj, word)
+```
+
+```{r}
+subjects <- hiphop %>%
+  distinct(subj,
+           .keep_all = TRUE)
+```
+
+
+```{r}
+subjects %>%
+  count(sex)
+```
+
+```{r}
+subjects %>%
+  summarize(mean(age))
+```
+
+```{r}
+subjects %>%
+  ggplot(aes(x = age)) +
+  geom_histogram()
+```
+
+## Exploring Relationships
+
+```{r}
+## From GGally
+subjects %>%
+  select(age, sex, ethnic, city, county) %>%
+  ggpairs()
+```
+
