@@ -210,6 +210,6 @@ When you click **render**, here is what happens:
 
 2. In your **console**, run `install.packages("usethis")`
 
-3. In your **console**, run `usethis::use_course("kbodwin/intro-to-tidyverse-workshop")`
+3. In your **console**, run `usethis::use_course("kbodwin/Intro-to-Tidyverse")`
 
 4. Open the file in the `Activities` folder named `01-Setup.qmd`.
