@@ -11,7 +11,7 @@ If you have not recently [downloaded R](https://cloud.r-project.org/), do so now
 
 If you have not recently [downloaded RStudio](https://posit.co/download/rstudio-desktop/), do so now.
 
-
+Alternatively, create a [Posit Cloud Account](posit.cloud).
 
 # What is R?
 
@@ -212,4 +212,10 @@ When you click **render**, here is what happens:
 
 3. In your **console**, run `usethis::use_course("Docere-Data-Science/Intro-to-Tidyverse")`
 
-4. Open the file in the `Activities` folder named `01-Setup.qmd`.
+OR
+
+On Posit Cloud, choose *New Project > GitHub Repository* and enter `https://github.com/Docere-Data-Science/Intro-to-Tidyverse`
+
+. . .
+
+Then, open the file in the `Activities` folder named `01-Setup.qmd`.
